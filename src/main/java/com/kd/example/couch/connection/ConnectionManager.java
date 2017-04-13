@@ -42,7 +42,7 @@ public class ConnectionManager {
 
 		checkAndCreateBucket(bucketname, cluster1, createnew);
 
-		Bucket specificBucket = cluster1.openBucket(bucketname);
+		Bucket specificBucket = cluster1.openBucket(bucketname, "password");
 
 		return specificBucket;
 	}
@@ -57,7 +57,7 @@ public class ConnectionManager {
 		ClusterManager clusterManager = cluster1.clusterManager("admin", "admin@123");
 		if (!clusterManager.hasBucket(bucketname) && createnew) {
 			BucketSettings bucketSettings = new DefaultBucketSettings.Builder().type(BucketType.COUCHBASE)
-					.name(bucketname).quota(120).build();
+					.name(bucketname).quota(120).password("password").build();
 			clusterManager.insertBucket(bucketSettings);
 		}
 	}
