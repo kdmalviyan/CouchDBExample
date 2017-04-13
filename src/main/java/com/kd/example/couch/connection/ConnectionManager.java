@@ -21,7 +21,7 @@ public class ConnectionManager {
 	/**
 	 * Using default bucket for now.
 	 */
-	public static Bucket getCouchbaseClient(String bucketname,boolean createnew, String... nodes) {
+	public static Bucket getCouchbaseClient(String bucketname, boolean createnew, String... nodes) {
 		// Simple Cluster, connected to localhost and default bucket
 		Cluster cluster = CouchbaseCluster.create();
 		Bucket defaultBucket = cluster.openBucket();
@@ -41,14 +41,15 @@ public class ConnectionManager {
 		Observable.just(cluster11, cluster12).subscribe();
 
 		checkAndCreateBucket(bucketname, cluster1, createnew);
-		
+
 		Bucket specificBucket = cluster1.openBucket(bucketname);
-		
+
 		return specificBucket;
 	}
 
 	/**
 	 * Check if bucket exists, if not create new bucket with specified name
+	 * 
 	 * @param bucketname
 	 * @param cluster1
 	 */
@@ -61,23 +62,44 @@ public class ConnectionManager {
 		}
 	}
 
+	/**
+	 * Close bucket and release resources when not required.
+	 * 
+	 * @param bucket
+	 */
+	public static void closeBucket(Bucket bucket) {
+		if (bucket != null && !bucket.isClosed()) {
+			bucket.async().close();
+		}
+	}
+
+	/**
+	 * Close all open clusters and environment
+	 * 
+	 * @param env
+	 * @param clusters
+	 */
 	public static void shutdownClusterConnection(CouchbaseEnvironment env, List<CouchbaseCluster> clusters) {
 		// If environment is used to create cluster, we need to shutdown ourself
-
-		Observable.from(clusters).flatMap(new Func1<CouchbaseCluster, Observable<? extends Boolean>>() {
-			@Override
-			public Observable<? extends Boolean> call(CouchbaseCluster c) {
-				return Observable.just(c.disconnect());
-			}
-		}).last().flatMap(new Func1<Boolean, Observable<? extends Boolean>>() {
-			@Override
-			public Observable<? extends Boolean> call(Boolean isDisconnected) {
-				if (isDisconnected) {
-					isDisconnected = env.shutdown();
+		if (clusters != null && !clusters.isEmpty()) {
+			Observable.from(clusters).flatMap(new Func1<CouchbaseCluster, Observable<? extends Boolean>>() {
+				@Override
+				public Observable<? extends Boolean> call(CouchbaseCluster c) {
+					return Observable.just(c.disconnect());
 				}
-				// shutdown environment when last cluster has disconnected
-				return Observable.just(isDisconnected);
-			}
-		});
+			}).last().flatMap(new Func1<Boolean, Observable<? extends Boolean>>() {
+				@Override
+				public Observable<? extends Boolean> call(Boolean isDisconnected) {
+					if (isDisconnected) {
+						if (env != null) {
+							isDisconnected = env.shutdown();
+						}
+					}
+					// shutdown environment when last cluster has disconnected
+					return Observable.just(isDisconnected);
+				}
+			});
+		}
+
 	}
 }
