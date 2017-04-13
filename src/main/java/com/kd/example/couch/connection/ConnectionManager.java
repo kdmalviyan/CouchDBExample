@@ -5,6 +5,9 @@ import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.CouchbaseCluster;
 
 public class ConnectionManager {
+	/**
+	* Using default bucket for now.
+	*/
 	public static Bucket getCouchbaseClient() {
 		Cluster cluster = CouchbaseCluster.create();
 		return cluster.openBucket();
